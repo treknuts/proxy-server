@@ -22,6 +22,8 @@ public class ProxyServer {
 
     String logFileName = "log.txt";
 
+    boolean listening = true;
+
     public static void main(String[] args) throws IOException {
         new ProxyServer().startServer(5678);
     }
@@ -42,20 +44,16 @@ public class ProxyServer {
          * Create a thread (RequestHandler) for each new client connection
          * remember to catch Exceptions!
          */
-
         try {
             proxySocket = new ServerSocket(proxyPort);
-
-            Socket clientSocket = proxySocket.accept();
-            while (true) {
-                RequestHandler thread = new RequestHandler(clientSocket, this);
-                thread.run();
-            }
-
+            proxySocket.getInetAddress();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        while (listening) {
+            new RequestHandler(proxySocket.accept(), this).start();
+        }
+        proxySocket.close();
     }
 
 
@@ -74,8 +72,8 @@ public class ProxyServer {
          * TODO: write info to log file with timestamp
          * write string (info) to the log file, and add the current time stamp
          * e.g. String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-         *
          */
+
 
 
     }

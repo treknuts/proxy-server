@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.StringTokenizer;
 
 
 // RequestHandler is thread that process requests of one client connection
@@ -61,7 +62,76 @@ public class RequestHandler extends Thread {
          * (3) Otherwise, call method proxyServertoClient to process the GET request
          */
         // Get host name from request
-        System.out.println(inFromClient);
+
+        try {
+            DataOutputStream out =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(clientSocket.getInputStream()));
+
+            String inputLine, outputLine;
+            int i = 0;
+            String urlToCall = "";
+
+            //begin get request from client
+            while ((inputLine = in.readLine()) != null) {
+                try {
+                    StringTokenizer tok = new StringTokenizer(inputLine);
+                    tok.nextToken();
+                } catch (Exception e) {
+                    break;
+                }
+                if (i == 0) {
+                    String[] tokens = inputLine.split(" ");
+
+                    urlToCall = tokens[1];
+                    System.out.println(tokens[0]);
+                    System.out.println("Requested URL: " + urlToCall);
+                }
+                i++;
+            }
+
+            BufferedReader rd = null;
+            try {
+                URL hostname = new URL(urlToCall);
+                URLConnection connection = hostname.openConnection();
+                connection.setDoInput(true);
+                connection.setDoOutput(false);
+                InputStream is = null;
+                HttpURLConnection httpConn = (HttpURLConnection) connection;
+                if (connection.getContentLength() > 0) {
+                    try {
+                        is = connection.getInputStream();
+                        rd = new BufferedReader(new InputStreamReader(is));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                int index = is.read(request, 0, 1024);
+                while (index != -1) {
+                    out.write(request, 0, index);
+                    index = is.read(request, 0, 1024);
+                }
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //close out all resources
+            if (rd != null) {
+                rd.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+            if (clientSocket != null) {
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -81,7 +151,7 @@ public class RequestHandler extends Thread {
 
 
         /*
-         * TODO:
+         * TODO: At this point I would have needed to parse client request
          * (1) Create a socket to connect to the web server (default port 80)
          * (2) Send client's request (clientRequest) to the web server, you may want to use flush() after writing.
          * (3) Use a while loop to read all responses from web server and send back to client
