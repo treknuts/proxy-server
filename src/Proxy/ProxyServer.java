@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +27,7 @@ public class ProxyServer {
     boolean listening = true;
 
     public static void main(String[] args) throws IOException {
-        new ProxyServer().startServer(5678);
+        new ProxyServer().startServer(Integer.parseInt(args[0]));
     }
 
     void startServer(int proxyPort) throws IOException {
@@ -46,12 +48,13 @@ public class ProxyServer {
          */
         try {
             proxySocket = new ServerSocket(proxyPort);
-            proxySocket.getInetAddress();
         } catch (Exception e) {
             e.printStackTrace();
         }
         while (listening) {
-            new RequestHandler(proxySocket.accept(), this).start();
+            Socket clientSocket = proxySocket.accept();
+            RequestHandler thread = new RequestHandler(clientSocket, this);
+            thread.start();
         }
         proxySocket.close();
     }
@@ -66,15 +69,18 @@ public class ProxyServer {
         cache.put(hashcode, fileName);
     }
 
-    public synchronized void writeLog(String info) {
+    public synchronized void writeLog(String info) throws IOException {
 
         /*
          * TODO: write info to log file with timestamp
          * write string (info) to the log file, and add the current time stamp
          * e.g. String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
          */
-
-
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.logFileName));
+        writer.append('-');
+        String date = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE);
+        String time = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
+        writer.append(info).append(" : ").append(date).append(" - ").append(time);
 
     }
 
