@@ -86,11 +86,6 @@ public class RequestHandler extends Thread {
                  count++;
              }
 
-             if(!urlToCall.substring(0,4).equals("http")){
-                 String temp = "http://";
-                 urlToCall = temp + urlToCall;
-             }
-
              if (this.server.cache.containsKey(urlToCall)) {
                  sendCachedInfoToClient(urlToCall);
              } else {
@@ -102,6 +97,7 @@ public class RequestHandler extends Thread {
              for (String str : tokens) {
                  System.out.println(str);
              }
+
          } catch (Exception e) {
              e.printStackTrace();
          }
@@ -131,22 +127,67 @@ public class RequestHandler extends Thread {
          * (5) close file, and sockets.
          */
 
-
         try {
-            outToServer = new BufferedOutputStream(clientSocket.getOutputStream());
             serverSocket = new Socket(url, 80);
+            inFromClient = new BufferedInputStream(clientSocket.getInputStream());
+            outToServer = new BufferedOutputStream(clientSocket.getOutputStream());
 
-            outToServer.write(clientRequest);
-            outToServer.flush();
-
-            // TODO: get the motherfucking server response
-            inFromServer = serverSocket.getInputStream();
-            while (inFromServer.read() != -1) {
-
+            int bytes;
+            try {
+                while((bytes = inFromClient.read(request)) != -1) {
+                    outToServer.write(request, 0, bytes);
+                    outToServer.flush();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            outToClient.write(serverReply);
-            outToClient.flush();
-        } catch (Exception e) {
+            outToServer.close();
+
+            inFromServer = new BufferedInputStream(serverSocket.getInputStream());
+            try {
+                int read;
+                while ((read = inFromServer.read(serverReply)) != -1) {
+                    outToClient.write(serverReply, 0, read);
+                    outToServer.flush();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            inFromServer.close();
+
+            try {
+                fileWriter = new FileOutputStream(fileName);
+                fileWriter.write(serverReply);
+                fileWriter.close();
+                this.server.putCache(url, fileName);
+                System.out.println("Response cached!");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
+                if (serverSocket != null) {
+                    serverSocket.close();
+                }
+                if (clientSocket != null) {
+                    clientSocket.close();
+                }
+                if (inFromServer != null) {
+                    inFromServer.close();
+                }
+                if (outToServer != null) {
+                    outToServer.close();
+                }
+                if (inFromClient != null) {
+                    inFromClient.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+         catch (Exception e) {
             e.printStackTrace();
         }
         return true;
