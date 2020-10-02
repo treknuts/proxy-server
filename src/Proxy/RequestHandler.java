@@ -4,9 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.StringTokenizer;
 
 
@@ -86,8 +84,10 @@ public class RequestHandler extends Thread {
                  count++;
              }
 
+             this.server.writeLog(urlToCall);
+
              if (this.server.cache.containsKey(urlToCall)) {
-                 sendCachedInfoToClient(urlToCall);
+                 sendCachedInfoToClient(this.server.getCache(urlToCall));
              } else {
                  if (tokens[0].equals("GET")) {
                      proxyServertoClient(request, urlToCall);
@@ -187,7 +187,8 @@ public class RequestHandler extends Thread {
             }
 
         }
-         catch (Exception e) {
+         catch (SocketTimeoutException e) {
+             System.out.println("Socket timeout");
             e.printStackTrace();
         }
         return true;

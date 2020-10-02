@@ -3,13 +3,8 @@ package Proxy;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,12 +46,13 @@ public class ProxyServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Socket clientSocket = null;
         while (listening) {
-            Socket clientSocket = proxySocket.accept();
+            clientSocket = proxySocket.accept();
             RequestHandler thread = new RequestHandler(clientSocket, this);
             thread.start();
         }
-        proxySocket.close();
+        clientSocket.close();
     }
 
 
@@ -77,11 +73,10 @@ public class ProxyServer {
          * e.g. String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
          */
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.logFileName));
-        writer.append('-');
         String date = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE);
         String time = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-        writer.append(info).append(" : ").append(date).append(" - ").append(time);
-
+        writer.append(info).append("-").append(date).append(":").append(time);
+        writer.close();
     }
 
 }
