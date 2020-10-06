@@ -72,10 +72,10 @@ public class ProxyServer {
          * write string (info) to the log file, and add the current time stamp
          * e.g. String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
          */
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.logFileName));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.logFileName, true));
         String date = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE);
         String time = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-        writer.append(info).append("-").append(date).append(":").append(time);
+        writer.append(info).append("-").append(date).append(":").append(time).append("\n");
         writer.close();
     }
 
